@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 
+
+const BASE_URL = "https://lead-generation-tool.onrender.com";
+
 function App() {
   const [keyword, setKeyword] = useState("");
   const [leads, setLeads] = useState([]);
@@ -14,32 +17,32 @@ function App() {
     fetchLeads();
   }, []);
 
-  // ✅ Fetch leads
+  // ✅ FETCH FROM BACKEND
   const fetchLeads = async () => {
-    const res = await fetch("http://localhost:5000/leads");
+    const res = await fetch(`${BASE_URL}/leads`);
     const data = await res.json();
     setLeads(Array.isArray(data) ? data : []);
   };
 
-  // ✅ Delete lead
+  // ✅ DELETE
   const deleteLead = async (id) => {
     const confirmDelete = window.confirm("Delete this lead?");
     if (!confirmDelete) return;
 
-    await fetch(`http://localhost:5000/leads/${id}`, {
+    await fetch(`${BASE_URL}/leads/${id}`, {
       method: "DELETE",
     });
 
     fetchLeads();
   };
 
-  // 🔍 Search
+  // 🔍 SEARCH
   const handleSearch = async () => {
     setLoading(true);
     setVisibleCount(5);
 
     try {
-      const res = await fetch("http://localhost:5000/scrape", {
+      const res = await fetch(`${BASE_URL}/scrape`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -64,7 +67,7 @@ function App() {
     setLoading(false);
   };
 
-  // 📄 Export CSV
+  // 📄 EXPORT
   const exportCSV = () => {
     const headers = ["Website", "Email", "Phone", "Keyword", "Source"];
 
@@ -86,7 +89,7 @@ function App() {
     link.click();
   };
 
-  // 📧 Send Emails
+  // 📧 SEND EMAILS
   const sendEmails = async () => {
     const valid = leads.filter(
       (l) => l.email && l.email !== "Not found"
@@ -94,7 +97,7 @@ function App() {
 
     if (valid.length === 0) return alert("❌ No valid emails");
 
-    await fetch("http://localhost:5000/send-emails", {
+    await fetch(`${BASE_URL}/send-emails`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -105,7 +108,7 @@ function App() {
     alert(`✅ Sent ${valid.length} emails`);
   };
 
-  // 🔁 Follow-up
+  // 🔁 FOLLOW-UP
   const sendFollowUp = async () => {
     const valid = leads.filter(
       (l) => l.email && l.email !== "Not found"
@@ -113,7 +116,7 @@ function App() {
 
     if (valid.length === 0) return alert("❌ No valid emails");
 
-    await fetch("http://localhost:5000/follow-up", {
+    await fetch(`${BASE_URL}/follow-up`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -124,14 +127,14 @@ function App() {
     alert("🔁 Follow-up sent");
   };
 
-  // ⭐ Status
+  // ⭐ STATUS
   const getStatus = (lead) => {
     if (lead.email !== "Not found" && lead.phone !== "Not found") return "hot";
     if (lead.email !== "Not found") return "warm";
     return "cold";
   };
 
-  // 🔍 Filtered leads
+  // 🔍 FILTER
   const filteredLeads = leads.filter((lead) => {
     return (
       (sourceFilter === "all" || lead.source === sourceFilter) &&
@@ -160,34 +163,6 @@ function App() {
         {/* HEADER */}
         <div className="flex justify-between mb-6">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg">
-            Upgrade
-          </button>
-        </div>
-
-        {/* STATS */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p>Total Leads</p>
-            <h2 className="text-xl font-bold">{leads.length}</h2>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p>Valid Emails</p>
-            <h2 className="text-xl font-bold">
-              {leads.filter((l) => l.email !== "Not found").length}
-            </h2>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p>Session Leads</p>
-            <h2 className="text-xl font-bold">{sessionLeads.length}</h2>
-          </div>
-
-          <div className="bg-white p-4 rounded-xl shadow">
-            <p>Keyword</p>
-            <h2 className="text-xl font-bold">{keyword || "—"}</h2>
-          </div>
         </div>
 
         {/* SEARCH */}
@@ -227,79 +202,37 @@ function App() {
           onChange={(e) => setFilter(e.target.value)}
         />
 
-        {/* SOURCE FILTER */}
-        <div className="flex gap-2 mb-4 flex-wrap">
-          {["all", "google", "facebook", "instagram", "justdial", "indiamart"].map((src) => (
-            <button
-              key={src}
-              onClick={() => setSourceFilter(src)}
-              className={`px-3 py-1 rounded text-sm ${
-                sourceFilter === src
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200"
-              }`}
-            >
-              {src}
-            </button>
-          ))}
-        </div>
-
-        {/* ACTIONS */}
-        <div className="flex gap-2 mb-4">
-          <button onClick={exportCSV} className="bg-gray-200 px-3 py-2 rounded-lg">
-            📄 Export
-          </button>
-
-          <button onClick={sendEmails} className="bg-green-600 text-white px-3 py-2 rounded-lg">
-            📧 Emails
-          </button>
-
-          <button onClick={sendFollowUp} className="bg-yellow-500 text-white px-3 py-2 rounded-lg">
-            🔁 Follow-up
-          </button>
-        </div>
-
         {/* LEADS */}
         <div className="space-y-4">
           {filteredLeads.slice(0, visibleCount).map((lead, index) => (
             <div
               key={lead.id || lead.website || index}
-              className="bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex justify-between items-center"
+              className="bg-white p-4 rounded-xl shadow flex justify-between items-center"
             >
-              <div className="max-w-xl">
-                <p className="font-semibold truncate">
+              <div>
+                <p className="font-semibold">
                   {lead.title || lead.website}
                 </p>
 
-                <p className="text-xs text-blue-500 mb-1">
+                <p className="text-xs text-blue-500">
                   {lead.source || "google"}
                 </p>
 
                 <p className="text-sm text-gray-600">📧 {lead.email}</p>
                 <p className="text-sm text-gray-600">📞 {lead.phone}</p>
-
-                <span className={`inline-block mt-2 text-xs px-2 py-1 rounded text-white ${
-                  getStatus(lead) === "hot"
-                    ? "bg-green-500"
-                    : getStatus(lead) === "warm"
-                    ? "bg-yellow-500"
-                    : "bg-red-500"
-                }`}>
-                  {getStatus(lead)}
-                </span>
               </div>
 
-              {/* ✅ BUTTONS */}
+              {/* ✅ SAME SIZE BUTTONS */}
               <div className="flex gap-2">
                 <a href={lead.website} target="_blank" rel="noreferrer">
-                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-sm rounded-md">
+                  <button className="bg-blue-500 text-white px-3 py-1 text-sm rounded-md">
                     Visit
                   </button>
                 </a>
 
                 <button
                   onClick={() => deleteLead(lead.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm rounded-md"
+                  className="bg-red-500 text-white px-3 py-1 text-sm rounded-md"
                 >
                   Delete
                 </button>

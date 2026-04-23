@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const BASE_URL = "https://lead-generation-tool.onrender.com";
+const BASE_URL = "https://lead-gerneration-tool.onrender.com";
 
 function App() {
   const [keyword, setKeyword] = useState("");
